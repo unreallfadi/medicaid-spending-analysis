@@ -1,0 +1,171 @@
+-- ============================================================
+-- CMS Medicaid Spending by Drug (2019-2023)
+-- Analytical Queries for Hospital Procurement Context
+-- ============================================================
+
+USE medicaid_spending;
+
+
+-- ============================================================
+-- QUERY 1: Top 10 Drugs by Total 2023 Spending
+-- ============================================================
+-- Reveals which drugs consume the largest share of the Medicaid
+-- budget. In a hospital procurement context, these are the drugs
+-- that require the most aggressive contract negotiation and
+-- inventory planning. A small number of drugs typically drive
+-- the majority of total program cost.
+-- ============================================================
+
+SELECT
+    Brnd_Name,
+    Gnrc_Name,
+    Mftr_Name,
+    Tot_Clms_2023                            AS total_claims,
+    ROUND(Tot_Spndng_2023, 2)                AS total_spending_2023,
+    ROUND(Avg_Spnd_Per_Clm_2023, 2)          AS avg_cost_per_claim,
+    ROUND(
+        Tot_Spndng_2023 / SUM(Tot_Spndng_2023) OVER () * 100, 2
+    )                                         AS pct_of_total_spending
+FROM drug_spending
+WHERE Tot_Spndng_2023 IS NOT NULL
+ORDER BY Tot_Spndng_2023 DESC
+LIMIT 10;
+
+
+-- ============================================================
+-- QUERY 2: Total Medicaid Spending by Year (2019–2023)
+-- ============================================================
+-- Shows whether overall drug spending is rising, falling, or
+-- stable. For procurement teams, a rising trend signals budget
+-- pressure and the need to review formulary decisions or
+-- negotiate better supplier contracts proactively.
+-- ============================================================
+
+SELECT
+    year,
+    ROUND(total_spending, 2)         AS total_spending,
+    ROUND(total_claims, 0)           AS total_claims,
+    ROUND(total_dosage_units, 0)     AS total_dosage_units
+FROM (
+    SELECT 2019 AS year,
+           SUM(Tot_Spndng_2019)     AS total_spending,
+           SUM(Tot_Clms_2019)       AS total_claims,
+           SUM(Tot_Dsg_Unts_2019)   AS total_dosage_units
+    FROM drug_spending
+
+    UNION ALL
+
+    SELECT 2020,
+           SUM(Tot_Spndng_2020),
+           SUM(Tot_Clms_2020),
+           SUM(Tot_Dsg_Unts_2020)
+    FROM drug_spending
+
+    UNION ALL
+
+    SELECT 2021,
+           SUM(Tot_Spndng_2021),
+           SUM(Tot_Clms_2021),
+           SUM(Tot_Dsg_Unts_2021)
+    FROM drug_spending
+
+    UNION ALL
+
+    SELECT 2022,
+           SUM(Tot_Spndng_2022),
+           SUM(Tot_Clms_2022),
+           SUM(Tot_Dsg_Unts_2022)
+    FROM drug_spending
+
+    UNION ALL
+
+    SELECT 2023,
+           SUM(Tot_Spndng_2023),
+           SUM(Tot_Clms_2023),
+           SUM(Tot_Dsg_Unts_2023)
+    FROM drug_spending
+) AS yearly_totals
+ORDER BY year;
+
+
+-- ============================================================
+-- QUERY 3: Top 5 Manufacturers by Revenue with Drug Count
+-- ============================================================
+-- Identifies which suppliers dominate Medicaid drug supply.
+-- Procurement teams use this to assess supplier concentration
+-- risk. If one manufacturer supplies too large a share of
+-- spending, any supply disruption becomes a critical risk.
+-- ============================================================
+
+SELECT
+    Mftr_Name,
+    COUNT(DISTINCT Brnd_Name)            AS distinct_drugs,
+    ROUND(SUM(Tot_Spndng_2023), 2)       AS total_revenue_2023,
+    ROUND(AVG(Avg_Spnd_Per_Clm_2023), 2) AS avg_cost_per_claim,
+    ROUND(
+        SUM(Tot_Spndng_2023) / SUM(SUM(Tot_Spndng_2023)) OVER () * 100, 2
+    )                                     AS pct_of_total_spending
+FROM drug_spending
+WHERE Tot_Spndng_2023 IS NOT NULL
+  AND Mftr_Name IS NOT NULL
+  AND Mftr_Name != 'Overall'
+GROUP BY Mftr_Name
+ORDER BY total_revenue_2023 DESC
+LIMIT 5;
+
+
+-- ============================================================
+-- QUERY 4: Average Cost Per Prescription — Brand vs Generic
+-- ============================================================
+-- Quantifies the cost gap between brand-name and generic drugs.
+-- This is one of the most actionable insights for procurement:
+-- switching formulary preference from brand to generic for the
+-- same molecule can produce significant savings at scale.
+-- ============================================================
+
+SELECT
+    drug_type,
+    COUNT(*)                                  AS drug_count,
+    ROUND(AVG(Avg_Spnd_Per_Clm_2023), 2)     AS avg_cost_per_claim_2023,
+    ROUND(AVG(Avg_Spnd_Per_Clm_2022), 2)     AS avg_cost_per_claim_2022,
+    ROUND(AVG(Avg_Spnd_Per_Clm_2021), 2)     AS avg_cost_per_claim_2021,
+    ROUND(SUM(Tot_Spndng_2023), 2)            AS total_spending_2023
+FROM (
+    SELECT *,
+        CASE
+            WHEN Brnd_Name = Gnrc_Name         THEN 'Generic'
+            WHEN Brnd_Name IS NULL
+              OR Brnd_Name = ''                THEN 'Generic'
+            ELSE                                    'Brand'
+        END AS drug_type
+    FROM drug_spending
+    WHERE Avg_Spnd_Per_Clm_2023 IS NOT NULL
+) AS classified
+GROUP BY drug_type
+ORDER BY avg_cost_per_claim_2023 DESC;
+
+
+-- ============================================================
+-- QUERY 5: Drugs with Over 50% Spending Increase (2022 to 2023)
+-- ============================================================
+-- Flags drugs whose cost per dosage unit jumped more than 50%
+-- in a single year. These represent immediate procurement risk:
+-- either price inflation, supply shortage, or a patent cliff
+-- reversal. Procurement teams should review these contracts
+-- urgently and evaluate therapeutic alternatives.
+-- ============================================================
+
+SELECT
+    Brnd_Name,
+    Gnrc_Name,
+    Mftr_Name,
+    ROUND(Avg_Spnd_Per_Dsg_Unt_Wghtd_2022, 4)  AS cost_per_unit_2022,
+    ROUND(Avg_Spnd_Per_Dsg_Unt_Wghtd_2023, 4)  AS cost_per_unit_2023,
+    ROUND(Chg_Avg_Spnd_Per_Dsg_Unt_22_23, 2)   AS pct_change_22_23,
+    ROUND(Tot_Spndng_2023, 2)                    AS total_spending_2023,
+    Tot_Clms_2023                                AS total_claims_2023
+FROM drug_spending
+WHERE Chg_Avg_Spnd_Per_Dsg_Unt_22_23 > 50
+  AND Tot_Spndng_2023 IS NOT NULL
+  AND Outlier_Flag_2023 = 0
+ORDER BY Chg_Avg_Spnd_Per_Dsg_Unt_22_23 DESC;
