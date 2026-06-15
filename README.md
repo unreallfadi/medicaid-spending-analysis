@@ -11,7 +11,7 @@ Built as a healthcare data analyst portfolio project targeting roles in hospital
 | Tool | Purpose |
 |------|---------|
 | MySQL | Database design, data loading, analytical queries |
-| Power BI Desktop | Interactive dashboard (3 pages) |
+| Metabase | Browser-based interactive dashboard (3 pages) |
 | Python (Jupyter) | Exploratory data analysis, visualizations |
 | GitHub | Version control and portfolio hosting |
 
@@ -47,8 +47,8 @@ medicaid-spending-analysis/
 ├── python/
 │   └── eda_notebook.ipynb        # Exploratory data analysis
 │
-├── powerbi/
-│   └── dashboard.pbix            # Power BI report file
+├── metabase/
+│   └── dashboard_screenshots/    # Exported dashboard screenshots
 │
 ├── data/
 │   └── README.md                 # Data source instructions
@@ -86,9 +86,9 @@ See `/sql/03_analysis_queries.sql` for full query code.
 
 ---
 
-## Power BI Dashboard
+## Metabase Dashboard
 
-The dashboard is organized across 3 pages:
+Built using Metabase connected directly to the MySQL database. The dashboard is organized across 3 pages:
 
 **Page 1 — Spending Overview**
 - Total spending KPI cards by year
@@ -105,16 +105,7 @@ The dashboard is organized across 3 pages:
 - High-risk drugs: 50%+ YoY spending increase (table)
 - CAGR distribution by drug type (histogram)
 
-> Dashboard screenshot will be added after Power BI report is complete.
-
-<!-- 
-TO ADD SCREENSHOT:
-1. Export dashboard page as image from Power BI (File > Export > Export to Image)
-2. Save it as /assets/dashboard_preview.png
-3. Uncomment the line below
--->
-
-<!-- ![Dashboard Preview](assets/dashboard_preview.png) -->
+![Dashboard Preview](assets/dashboard_preview.png)
 
 ---
 
@@ -147,12 +138,12 @@ pip install pandas matplotlib seaborn jupyter
 jupyter notebook python/eda_notebook.ipynb
 ```
 
-### Power BI
+### Metabase
 
-Open `powerbi/dashboard.pbix` in Power BI Desktop.
-Update the data source to point to your MySQL connection or the CSV file.
-
----
+1. Install Metabase locally or use Metabase Cloud
+2. Connect it to your MySQL `medicaid_spending` database
+3. Recreate the dashboard using the questions and layout described above
+4. Export screenshots and save them to `/assets/`
 
 ## Author
 
