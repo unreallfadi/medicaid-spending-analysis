@@ -11,7 +11,7 @@ Built as a healthcare data analyst portfolio project targeting roles in hospital
 | Tool | Purpose |
 |------|---------|
 | MySQL | Database design, data loading, analytical queries |
-| Metabase | Browser-based interactive dashboard (3 pages) |
+| Power BI | Interactive reports and dashboards (Power BI Desktop / Service) |
 | Python (Jupyter) | Exploratory data analysis, visualizations |
 | GitHub | Version control and portfolio hosting |
 
@@ -47,8 +47,8 @@ medicaid-spending-analysis/
 ├── python/
 │   └── eda_notebook.ipynb        # Exploratory data analysis
 │
-├── metabase/
-│   └── dashboard_screenshots/    # Exported dashboard screenshots
+├── power_bi/
+│   └── report_files/    # Power BI Desktop files and exported report screenshots
 │
 ├── data/
 │   └── README.md                 # Data source instructions
@@ -86,9 +86,9 @@ See `/sql/03_analysis_queries.sql` for full query code.
 
 ---
 
-## Metabase Dashboard
+## Power BI Report
 
-Built using Metabase connected directly to the MySQL database. The dashboard is organized across 3 pages:
+Built using Power BI Desktop connected to the MySQL database (or a prepared dataset). The report is organized across 3 pages mirroring the original analysis:
 
 **Page 1 — Spending Overview**
 - Total spending KPI cards by year
@@ -105,7 +105,7 @@ Built using Metabase connected directly to the MySQL database. The dashboard is 
 - High-risk drugs: 50%+ YoY spending increase (table)
 - CAGR distribution by drug type (histogram)
 
-![Dashboard Preview](assets/dashboard_preview.png)
+You can publish the report to Power BI Service for sharing, or export screenshots to `assets/` for portfolio display.
 
 ---
 
@@ -138,12 +138,12 @@ pip install pandas matplotlib seaborn jupyter
 jupyter notebook python/eda_notebook.ipynb
 ```
 
-### Metabase
+### Power BI
 
-1. Install Metabase locally or use Metabase Cloud
-2. Connect it to your MySQL `medicaid_spending` database
-3. Recreate the dashboard using the questions and layout described above
-4. Export screenshots and save them to `/assets/`
+1. Install Power BI Desktop (or use Power BI Service)
+2. Connect to MySQL using the MySQL connector or import a prepared dataset
+3. Build the three report pages described above
+4. Publish to Power BI Service to share, or export report pages/screenshots to `/assets/` for portfolio use
 
 ## Author
 
